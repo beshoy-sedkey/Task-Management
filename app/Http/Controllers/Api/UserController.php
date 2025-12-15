@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\UserService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 class UserController extends Controller
 {
+    use ApiResponse;
+
     public function __construct(
         private UserService $userService
     ) {}
@@ -25,19 +28,11 @@ class UserController extends Controller
 
             $users = $this->userService->getAllUsers($page, $limit);
 
-            return response()->json([
-                'data' => $users->items(),
-                'pagination' => [
-                    'page' => $users->currentPage(),
-                    'limit' => $users->perPage(),
-                    'total' => $users->total(),
-                    'totalPages' => $users->lastPage(),
-                ],
-            ], 200);
+            return $this->paginatedResponse($users, 'Users retrieved successfully');
         } catch (InvalidArgumentException $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->validationErrorResponse($e->getMessage());
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Internal server error'], 500);
+            return $this->serverErrorResponse('Failed to retrieve users');
         }
     }
 
@@ -51,14 +46,11 @@ class UserController extends Controller
 
             $user = $this->userService->createUser($data);
 
-            return response()->json([
-                'message' => 'User created successfully',
-                'data' => $user,
-            ], 201);
+            return $this->createdResponse($user, 'User created successfully');
         } catch (InvalidArgumentException $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->validationErrorResponse($e->getMessage());
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Internal server error'], 500);
+            return $this->serverErrorResponse('Failed to create user');
         }
     }
 
@@ -71,18 +63,18 @@ class UserController extends Controller
             $userId = (int) $id;
 
             if ($userId < 1) {
-                return response()->json(['error' => 'Invalid user ID'], 400);
+                return $this->validationErrorResponse('Invalid user ID');
             }
 
             $user = $this->userService->getUserById($userId);
 
             if (!$user) {
-                return response()->json(['error' => 'User not found'], 404);
+                return $this->notFoundResponse('User not found');
             }
 
-            return response()->json($user, 200);
+            return $this->successResponse($user, 'User retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Internal server error'], 500);
+            return $this->serverErrorResponse('Failed to retrieve user');
         }
     }
 
@@ -91,7 +83,7 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        return response()->json(['error' => 'Method not allowed'], 405);
+        return $this->errorResponse('Method not allowed', 405);
     }
 
     /**
@@ -99,6 +91,6 @@ class UserController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        return response()->json(['error' => 'Method not allowed'], 405);
+        return $this->errorResponse('Method not allowed', 405);
     }
 }
