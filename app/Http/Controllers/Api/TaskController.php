@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PaginationRequest;
 use App\Services\TaskService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -20,15 +21,14 @@ class TaskController extends Controller
     /**
      * Display a listing of tasks.
      */
-    public function index(Request $request): JsonResponse
+    public function index(PaginationRequest $request): JsonResponse
     {
         try {
-            $page = (int) $request->query('page', 1);
-            $limit = (int) $request->query('limit', 10);
-            $userId = $request->query('userId') ? (int) $request->query('userId') : null;
-
-            $tasks = $this->taskService->getAllTasks($page, $limit, $userId);
-
+            $tasks = $this->taskService->getAllTasks(
+                $request->page(),
+                $request->limit(),
+                $request->query('userId') ? (int) $request->query('userId') : null
+            );
             return $this->paginatedResponse($tasks, 'Tasks retrieved successfully');
         } catch (InvalidArgumentException $e) {
             return $this->validationErrorResponse($e->getMessage());

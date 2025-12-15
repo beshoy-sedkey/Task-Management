@@ -50,13 +50,7 @@ class TaskService
      */
     public function getAllTasks(int $page = 1, int $limit = 10, ?int $userId = null): Paginator
     {
-        if ($page < 1) {
-            throw new InvalidArgumentException('Page must be >= 1');
-        }
-
-        if ($limit < 1 || $limit > 100) {
-            throw new InvalidArgumentException('Limit must be between 1 and 100');
-        }
+    
 
         // Check if user exists when filtering by userId
         if ($userId !== null && !$this->userRepository->findById($userId)) {
